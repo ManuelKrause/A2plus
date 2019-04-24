@@ -516,6 +516,7 @@ class TopoMapper(object):
             transparency = ob.ViewObject.Transparency
             shape_list.append(ob.Shape)
             
+            print('A2p-topomapper: len(Faces): {}\n'.format(len(tempShape.Faces)))
             if needDiffuseExtension:
                 diffuseElement = a2plib.makeDiffuseElement(shapeCol,transparency)
                 for i in range(0,len(tempShape.Faces)):
@@ -523,6 +524,11 @@ class TopoMapper(object):
             else:
                 faceColors.extend(diffuseCol) #let python libs extend faceColors, much faster
             faces.extend(tempShape.Faces) #let python libs extend faces, much faster
+
+        print('A2p-topomapper: final len(faceColors): {}\n'.format(len(faceColors)))
+        print('A2p-topomapper: final faceColors: \n')
+        for i, col in enumerate(faceColors): # get all members, as simple print omits too many
+            print("{} {}".format(i,col))
 
         shell = Part.makeShell(faces)
         try:

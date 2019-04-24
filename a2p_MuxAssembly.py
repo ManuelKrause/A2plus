@@ -132,6 +132,8 @@ def muxAssemblyWithTopoNames(doc):
         # now start the loop with use of the stored values..(much faster)
         topoNaming = a2plib.getUseTopoNaming()
         diffuseElement = makeDiffuseElement(shapeCol,transparency)
+
+        print('A2p-MuxAssembly: len(Faces): {}\n'.format(len(tempShape.Faces)))
         for i in range(0,len(tempShape.Faces)):
             if topoNaming:
                 if extendNames:
@@ -147,6 +149,11 @@ def muxAssemblyWithTopoNames(doc):
             faceColors.extend(diffuseCol)
 
         faces.extend(tempShape.Faces)
+
+    print('A2p-MuxAssembly: final len(faceColors): {}\n'.format(len(faceColors)))
+    print('A2p-MuxAssembly: final faceColors: \n')
+    for i, col in enumerate(faceColors): # get all members, as simple print omits too many
+        print("{} {}".format(i,col))
 
     shell = Part.makeShell(faces)
     try:
