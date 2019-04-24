@@ -232,8 +232,8 @@ def setTransparency():
                 )
 
         obj.ViewObject.Transparency = 80
-        sel.addSelection(obj) # Transparency workaround. Transparency is taken when once been selected
-        sel.clearSelection()
+        trigger3DViewRefresh(obj,"addclearSel") # Workaround: Transparency is taken, once been selected
+                                                # variant #2 "add/clearSelection"
 #------------------------------------------------------------------------------
 def restoreTransparency():
     global SAVED_TRANSPARENCY
@@ -248,8 +248,8 @@ def restoreTransparency():
             obj.ViewObject.Transparency = setting[1]
             obj.ViewObject.ShapeColor = setting[2]
             obj.ViewObject.DiffuseColor = setting[3]                 # diffuse always at last
-            sel.addSelection(obj)
-            sel.clearSelection()
+            trigger3DViewRefresh(obj,"addclearSel") # Workaround: Transparency is taken, once been selected
+                                                    # variant #2 "add/clearSelection"
 
     SAVED_TRANSPARENCY = []
 #------------------------------------------------------------------------------
@@ -767,6 +767,51 @@ def makeDiffuseElement(color,trans):
     elem = (color[0],color[1],color[2],trans/100.0)
     return elem
 #------------------------------------------------------------------------------
+def trigger3DViewRefresh(object,mode):    ## Bundles 3D View refresh methods for simplified testing
+
+    if mode == "addremoveSel":            # #1 from updateImportedParts /
+                                          #    copyObjectColors @A2plus
+        # select/remove object once to trigger update of 3D View
+        FreeCADGui.Selection.addSelection(object)
+        FreeCADGui.Selection.removeSelection(object)
+
+    elif mode == "addclearSel":           # #2 from set/restoreTransparency() @A2plus
+        # select/clear object once to trigger update of 3D View
+        FreeCADGui.Selection.addSelection(object)
+        FreeCADGui.Selection.clearSelection()
+
+    elif mode == "notPerFace":            # #3 from copyObjectColors @A2plus
+        # touch transparency once to trigger update of 3D View
+        # per face transparency probably gets lost
+        if object.ViewObject.Transparency > 0:
+            t = object.ViewObject.Transparency
+            object.ViewObject.Transparency = 0
+            object.ViewObject.Transparency = t
+        else:
+            object.ViewObject.Transparency = 1
+            object.ViewObject.Transparency = 0
+
+    elif mode == "resetDiffuse":          # #4 from Arch WB
+        # to be applied after DiffuseColor manipulation? @ViewProvider local ?
+        if len(object.ViewObject.DiffuseColor) > 1:
+            # force-reset colors if changed
+            object.ViewObject.DiffuseColor = object.ViewObject.DiffuseColor
+
+    elif mode == "VOupdate":              # #5, from Arch WB
+        # to be applied after DiffuseColor manipulation? @ViewProvider component ?
+        object.ViewObject.update()
+
+    elif mode == "A2workaround":          # #6, from assembly2, after copy.copy(DiffuseColor)
+#        tsp = copy.copy( obj_to_copy.ViewObject.Transparency )   # .Transparency workaround for FC 0.17 @ Nov 2016
+        tsp = copy.copy( object.ViewObject.Transparency )   # .Transparency workaround for FC 0.17 @ Nov 2016
+        if tsp < 100 and tsp!=0:
+            object.ViewObject.Transparency = tsp+1
+        if tsp == 100:
+            object.ViewObject.Transparency = tsp-1
+        object.ViewObject.Transparency = tsp   # .Transparency workaround end
+
+    print("A2p-trigger3DViewRefresh Mode: {}".format(mode))
+#------------------------------------------------------------------------------
 def copyObjectColors(ob1,ob2):
     '''
     copies colors from ob2 to ob1
@@ -783,19 +828,13 @@ def copyObjectColors(ob1,ob2):
     ob1.ViewObject.DiffuseColor = newDiffuseColor # set diffuse last
 
     if not getPerFaceTransparency():
-        # touch transparency one to trigger update of 3D View
-        # per face transparency probably gets lost
-        if ob1.ViewObject.Transparency > 0:
-            t = ob1.ViewObject.Transparency
-            ob1.ViewObject.Transparency = 0
-            ob1.ViewObject.Transparency = t
-        else:
-            ob1.ViewObject.Transparency = 1
-            ob1.ViewObject.Transparency = 0
+        trigger3DViewRefresh(ob1,"notPerFace")  # code moved ## Transparency gets lost !
+#    else:                                       # DON'T DO THE FOLLOWING:
+#        triggerView3DRefresh(ob1,"notPerFace") # try this here anyways, too?
+    else:
+        triggerView3DRefresh(ob1,"A2workaround") # now try variant #6
 
-    # select/unselect object once to trigger update of 3D View
-    FreeCADGui.Selection.addSelection(ob1)
-    FreeCADGui.Selection.removeSelection(ob1)
+    trigger3DViewRefresh(ob1,"addremoveSel") # code moved
 #------------------------------------------------------------------------------
 def isConstrainedPart(doc,obj):
     if not isA2pPart(obj): return False

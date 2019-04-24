@@ -268,6 +268,14 @@ def importPartFromFile(_doc, filename, importToCache=False):
     
         #=========================================
 
+    # Try various 3D view update trigger methods - Transparency AND DiffuseColor had both changed
+    # maybe try different ones for parts and assemblies ???
+#    a2plib.trigger3DViewRefresh(newObj,"addremoveSel") # variant #1 "add/removeSelection"
+    a2plib.trigger3DViewRefresh(newObj,"resetDiffuse") # variant #4 "Re-reset DiffuseColor"
+    a2plib.trigger3DViewRefresh(newObj,"addclearSel")  # variant #2 "add/clearSelection"
+ 
+    a2plib.trigger3DViewRefresh(newObj,"VOupdate") # variant #5 "ViewObject.update()" # Only plain colors taken ???
+
     return newObj
 
 

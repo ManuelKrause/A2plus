@@ -578,4 +578,12 @@ class TopoMapper(object):
                 name = self.shapeDict.get(keys[0],"None")
                 muxInfo.append(name)
 
+        # Does it make sense to try Klaus' workaround from a2p_MuxAssembly.py 
+        # also here ???
+        # Set transparency to a default value of 0, when faceColors
+        # still contains the per face transparency values ???
+        # Handle inherited faceColor later ???
+        transparency = 0
+        
         return muxInfo, solid, faceColors, transparency
+
